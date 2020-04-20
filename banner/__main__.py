@@ -95,6 +95,9 @@ def main(args):
         print()
     conn_messages = {i: [] for i in range(len(conns))}
     start_time = time.time()
+    next_read_connections = {
+        i: time.monotonic() for i in range(len(conns))
+    }
     for num, ban in enumerate(list_parser.BanListIterator(args.ban_list_url, request_headers=headers)):
         if current_connection_number >= len(conns):
             current_connection_number = 0
@@ -111,6 +114,10 @@ def main(args):
             _print_progress_bar(num, args.length, args)
 
         if args.enable_progress_reading:
+            if next_read_connections[current_connection_number] > time.monotonic():
+                continue
+            next_read_connections[current_connection_number] = time.monotonic() + 1
+
             while 1:
                 read, _, _ = select.select([conn.socket], [], [], 0)
                 if not read:
